@@ -9,20 +9,19 @@ use Kodeine\Metable\Metable;
 class Customer extends Model
 {
     use Metable;
+
     protected $metaTable = 'customers_meta';
-    protected $metaKeyName = 'customer_id';
-    protected $fillable = [
-        'name',
-        'email',
-        'companyName',
-        'popularity',
-    ];
-    public function phoneNumbers()
+//    protected $fillable = ['name', 'email', 'company_name', 'popularity'];
+    public function getFillable()
     {
-        return $this->hasMany(PhoneNumber::class);
+        return ModuleField::where('module_name', '=', 'customer')->pluck('code')->toArray();
     }
-//    public function meta()
-//    {
-//        return $this->hasMany('App\Models\CustomerMeta', 'customer_id');
-//    }
+
+    protected $hidden = ['created_at', 'updated_at'];
+
+    public function toArray(): array
+    {
+        return array_merge(parent::toArray(), $this->getMeta()->toArray());
+    }
+
 }

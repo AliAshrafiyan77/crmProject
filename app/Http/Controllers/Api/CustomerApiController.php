@@ -2,52 +2,38 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\CustomerExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CustomerRequest;
+use App\Imports\CustomerImport;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerApiController extends Controller
 {
     public function index(){
-        return Customer::with('phoneNumbers')->get();
+        return Customer::get();
     }
-    public function store(Request $request){
-        $validated = $request->validate([
-            'name' => ['required' , 'min:2' , 'max:255'],
-            'email' => ['required' , 'email'],
-            'companyName' => ['nullable' , 'min:3' , 'max:255'],
-            'popularity' => ['nullable'],
-            'phoneNumbers' => ['required','array'],
-            'phoneNumbers.*' => ['required' , 'digits_between:11,15' , 'min:11'],
-            'address' => ['required', 'string', 'max:255'],
-        ]);
-         $popularity = 0;
-         if ($request->popularity){
-             $popularity = $request->popularity;
-         }elseif (!$request->popularity){
-             $popularity = 0;
-         }
-        $customer = Customer::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'companyName' => $request->companyName,
-            'popularity' => $popularity,
-        ]);
-        foreach ($request->phoneNumbers as $phoneNumber) {
-            $customer->phoneNumbers()->create([
-                'phone_number' => $phoneNumber,
-            ]);
-        }
-        $customer->meta()->create([
-            'customer_id' => $customer->id,
-            'key' => 'address',
-            'value' => $request->address,
-        ]);
-        info($request->all());
+    public function store(CustomerRequest $request){
+        $customer = Customer::create($request->all());
         return response()->json([
             'message' => 'Customer created successfully',
             'customer' => $customer,
-            'phone_numbers' => $customer->phoneNumbers,
         ], 201);
+    }
+    public function export(){
+        return Excel::download(new CustomerExport, 'customers.xlsx' ,  \Maatwebsite\Excel\Excel::XLSX);
+    }
+
+    public function import(Request $request)
+    {
+        info($request->all());
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv',
+        ]);
+        Excel::import(new CustomerImport, $request->file('file'));
+
+        return response()->json(['message' => 'ایمپورت فایل با موفقیت انجام شد'], 200);
     }
 }

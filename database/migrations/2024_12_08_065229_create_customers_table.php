@@ -16,12 +16,14 @@ return new class extends Migration
             $table->timestamps();
             $table->string('name');
             $table->string('email');
-            $table->string('companyName');
+            $table->string('company_name');
             $table->tinyInteger('popularity')->default(0);
         });
         Schema::create('customers_meta', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade'); // ایجاد کلید خارجی
+            $table->bigInteger('customer_id')->unsigned();
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+            $table->string('type')->default('null');
             $table->string('key')->index();
             $table->text('value')->nullable();
             $table->timestamps();
