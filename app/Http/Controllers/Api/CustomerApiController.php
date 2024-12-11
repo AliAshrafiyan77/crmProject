@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\Customer1Export;
 use App\Exports\CustomerExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
@@ -23,7 +24,8 @@ class CustomerApiController extends Controller
         ], 201);
     }
     public function export(){
-        return Excel::download(new CustomerExport, 'customers.xlsx' ,  \Maatwebsite\Excel\Excel::XLSX);
+//        return Excel::download(new CustomerExport, 'customers.xlsx' ,  \Maatwebsite\Excel\Excel::XLSX);
+        return Excel::download(new Customer1Export, 'customers.xlsx' ,  \Maatwebsite\Excel\Excel::XLSX);
     }
 
     public function import(Request $request)

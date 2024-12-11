@@ -15,7 +15,7 @@ class CustomerExport implements FromCollection, WithHeadings
     public function collection()
     {
         return Customer::all()->map(function ($customer) {
-            return $customer->toArray(); // Apply toArray with custom logic
+            return $customer->toArray();
         });
     }
 

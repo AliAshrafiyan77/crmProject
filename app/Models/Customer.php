@@ -17,7 +17,6 @@ class Customer extends Model
         return ModuleField::where('module_name', '=', 'customer')->pluck('code')->toArray();
     }
 
-    protected $hidden = ['created_at', 'updated_at'];
 
     public function toArray(): array
     {
