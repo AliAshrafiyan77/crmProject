@@ -17,16 +17,17 @@ class AuthApiController extends Controller
     {
         $this->authService = $authService;
     }
+
     /**
      * Register users
-     * @param Request $request
-     * @return JsonResponse
+     * //     * @param Request $request
+     * //     * @return JsonResponse
      */
     public function register(Request $request): JsonResponse
     {
         $validation = $this->authService->validate_registration($request->all());
 
-        if(!$validation['success']){
+        if (!$validation['success']) {
             $response = [
                 'status' => 'error',
                 'message' => $validation['errors'],
@@ -39,7 +40,8 @@ class AuthApiController extends Controller
         try {
 
             $user = $this->authService->register($validated_data);
-            info($user);
+            info($user->email);
+
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -47,30 +49,21 @@ class AuthApiController extends Controller
             ], 200);
         }
 
-        $response = Http::asForm()->post(url('/oauth/token'), [
+        $response = Http::post('http://127.0.0.1:8000/oauth/token', [
             'grant_type' => 'password',
             'client_id' => env('PASSPORT_PASSWORD_GRANT_CLIENT_ID'),
             'client_secret' => env('PASSPORT_PASSWORD_GRANT_CLIENT_SECRET'),
-            'username' => $user->email,
+            'username' => $validated_data['email'],
             'password' => $validated_data['password'],
+            'scope' => '*',
         ]);
-
-        // بررسی خطای درخواست توکن
-        if ($response->failed()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to generate access token',
-                'error_details' => $response->json(),
-            ], 400);
-        }
-
-        $data = $response->json();
 
         return response()->json([
             'status' => 'success',
             'message' => 'User registered successfully',
-            'token' => $data['access_token'],
             'data' => $user,
+            'token' => $response->json(),
+
         ], 200);
 
     }
@@ -84,7 +77,7 @@ class AuthApiController extends Controller
     {
         $validation = $this->authService->validate_login($request->all());
 
-        if(!$validation['success']){
+        if (!$validation['success']) {
 
             return response()->json([
                 'status' => 'error',
@@ -95,6 +88,25 @@ class AuthApiController extends Controller
         $validated_data = $validation['request'];
 
         return $this->authService->login($validated_data);
+
+    }
+
+
+    public function refreshToken(Request $request)
+    {
+        $validation = $this->authService->validate_refresh_token($request->all());
+
+        if(!$validation['success']){
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $validation['errors'],
+            ], 200);
+        }
+
+        $validated_data = $validation['request'];
+
+        return $this->authService->refresh_token($validated_data);
 
     }
 }

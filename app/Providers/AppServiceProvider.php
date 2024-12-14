@@ -21,10 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Passport::enablePasswordGrant();
         Passport::tokensExpireIn(now()->addDays(1));
-        Passport::refreshTokensExpireIn(now()->addDays(15));
-        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
+//        Passport::refreshTokensExpireIn(now()->addDays(15));
+//        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
+        Passport::enablePasswordGrant();
+//        Passport::enableImplicitGrant();
 
     }
 }

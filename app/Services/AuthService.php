@@ -6,6 +6,7 @@ namespace App\Services;
 use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 
@@ -85,12 +86,13 @@ class AuthService
     public function login(array $data)
     {
         try {
-            $tokenRequest = Request::create('/oauth/token', 'POST', [
+            $response = Http::post('http://127.0.0.1:8000/oauth/token', [
                 'grant_type' => 'password',
                 'client_id' => env('PASSPORT_PASSWORD_GRANT_CLIENT_ID'),
-                'client_secret' => env('PASSPORT_PASSWORD_GRANT_CLIENT_ID'),
+                'client_secret' => env('PASSPORT_PASSWORD_GRANT_CLIENT_SECRET'),
                 'username' => $data['email'],
                 'password' => $data['password'],
+                'scope' => '*',
             ]);
         }catch (Exception $e) {
             return response()->json([
@@ -99,6 +101,57 @@ class AuthService
             ], 200);
         }
 
-        return app()->handle($tokenRequest);
+        return $response->json();
     }
+
+
+    /**
+     * @param array $request
+     * @return array
+     */
+    public function validate_refresh_token(array $request):array
+    {
+        $validator = Validator::make($request, [
+            'refresh_token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'errors' => $validator->errors()->toArray()
+            ];
+        }
+
+        $sanitized_data = GeneralService::sanitize_data($request);
+
+        return [
+            'success' => true,
+            'request' => $sanitized_data,
+        ];
+    }
+
+    /**
+     * @param array $data
+     * @return Response|false|\Illuminate\Http\JsonResponse
+     * @throws Exception
+     */
+    public function refresh_token(array $data)
+    {
+        try {
+            $response = Http::post('http://127.0.0.1:8000/oauth/token' , [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $data['refresh_token'],
+                'client_id' => env('PASSPORT_PASSWORD_GRANT_CLIENT_ID'),
+                'client_secret' => env('PASSPORT_PASSWORD_GRANT_CLIENT_SECRET'),
+            ]);
+
+        }catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to get refresh token. ' . $e->getMessage()
+            ], 200);
+        }
+        return $response->json();
+    }
+
 }
